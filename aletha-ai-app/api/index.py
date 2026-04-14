@@ -11,8 +11,8 @@ API_KEY = os.getenv("GEMINI_API_KEY")
 # Konfigurasi Gemini (Pastikan model name-nya sudah tepat)
 try:
     genai.configure(api_key=API_KEY)
-    # Model yang lagi stabil dan kencang
-    model = genai.GenerativeModel('gemini-pro') 
+    # Ganti baris model kamu jadi ini:
+model = genai.GenerativeModel('gemini-3-flash-preview')
 except Exception as e:
     print(f"Error Konfigurasi Gemini: {e}")
 
