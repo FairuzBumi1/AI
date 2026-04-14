@@ -1,20 +1,110 @@
-// Ganti bagian tanyaAI() di script HTML kamu jadi begini:
-async function tanyaAI() {
-    // ... (kode ambil input dan tampilkan chat user sama seperti tadi)
-
-    try {
-        const response = await fetch('/ask', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: text }) // Kirim pesan ke Python
-        });
-
-        const data = await response.json();
-        
-        if (data.response) {
-            // Tampilkan data.response ke chatbox
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aletha AI Pro - v3.1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Desain Glassmorphism */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-    } catch (error) {
-        // Tampilkan error
-    }
-}
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #0891b2; border-radius: 10px; }
+        
+        /* Animasi biar makin gokil */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .message-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-[#0f172a] text-white min-h-screen flex items-center justify-center p-4">
+
+    <div class="glass-card p-6 rounded-2xl shadow-2xl w-full max-w-md">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-black text-cyan-400 tracking-tight">ALETHA AI</h1>
+            <span class="px-2 py-1 rounded bg-cyan-500/20 text-cyan-400 text-[10px] font-bold border border-cyan-500/50">SMK YUPENTEK 2</span>
+        </div>
+        
+        <div id="chatbox" class="h-96 overflow-y-auto mb-4 p-4 bg-slate-900/50 rounded-xl text-sm flex flex-col gap-4 border border-slate-700/50">
+            <div class="text-slate-500 text-center text-xs italic">Sistem diaktifkan. Silakan sapa AI kamu...</div>
+        </div>
+
+        <div class="relative group">
+            <input type="text" id="userInput" placeholder="Tanya sesuatu ke Aletha AI..." 
+                class="w-full bg-slate-800 p-4 pr-16 rounded-xl outline-none focus:ring-2 focus:ring-cyan-500 transition-all border border-slate-700 text-sm">
+            <button onclick="tanyaAI()" id="sendBtn" 
+                class="absolute right-2 top-2 bottom-2 bg-cyan-600 hover:bg-cyan-500 px-4 rounded-lg font-bold transition-all active:scale-95 text-xs">
+                Kirim
+            </button>
+        </div>
+    </div>
+
+    <script>
+        async function tanyaAI() {
+            const input = document.getElementById('userInput');
+            const chatbox = document.getElementById('chatbox');
+            const btn = document.getElementById('sendBtn');
+            const text = input.value.trim();
+
+            if (!text) return;
+
+            // 1. Tampilkan Chat User
+            chatbox.innerHTML += `
+                <div class="self-end bg-cyan-700/40 p-3 rounded-2xl rounded-tr-none max-w-[85%] shadow-sm border border-cyan-500/30 message-fade-in">
+                    <p class="text-[10px] text-cyan-300 font-bold mb-1 italic">YOU</p>
+                    ${text}
+                </div>`;
+            
+            // Bersihkan input dan disable tombol
+            input.value = '';
+            btn.disabled = true;
+            btn.innerHTML = "...";
+            chatbox.scrollTop = chatbox.scrollHeight;
+
+            try {
+                // 2. Kirim Pesan ke Route '/ask' yang ada di Python (Bukan ke Google langsung!)
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text }) // Kirim pesan ke Python
+                });
+
+                const data = await response.json();
+
+                // 3. Tampilkan Jawaban AI
+                if (data.response) {
+                    chatbox.innerHTML += `
+                        <div class="self-start bg-slate-800 p-3 rounded-2xl rounded-tl-none max-w-[85%] shadow-sm border border-slate-700 message-fade-in">
+                            <p class="text-[10px] text-cyan-400 font-bold mb-1 italic">ALETHA AI</p>
+                            <div class="leading-relaxed text-slate-200">${data.response}</div>
+                        </div>`;
+                } else {
+                    // Jika ada error dari server Python
+                    throw new Error(data.error || "Gagal mengambil respon dari server.");
+                }
+            } catch (error) {
+                // Tampilkan pesan error di chatbox
+                console.error("Error Detail:", error);
+                chatbox.innerHTML += `
+                    <div class="bg-red-500/10 border border-red-500/50 p-3 rounded-lg text-[11px] text-red-400 message-fade-in">
+                        <strong>ERROR:</strong> ${error.message}
+                    </div>`;
+            }
+
+            // Kembalikan tombol ke keadaan semula
+            btn.disabled = false;
+            btn.innerHTML = "Kirim";
+            chatbox.scrollTop = chatbox.scrollHeight;
+        }
+
+        // Support Tombol 'Enter'
+        document.getElementById('userInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') tanyaAI();
+        });
+    </script>
+</body>
+</html>
